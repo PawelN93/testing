@@ -1,61 +1,41 @@
 #include "gtest/gtest.h"
 #include <algorithm>
 #include <vector>
+#include <functional>
 
-struct SortOnVector : public testing::TestWithParam<std::vector<int>> {
-    std::vector<int> expected = {1, 2, 3};
+using Data = std::vector<int>;
+using SortDataSet = std::tuple<Data, std::function<bool(const int&, const int&)>, Data>;
 
-    void setDataForGreaterComp(){
-        expected = {3, 2, 1};
-    }
-};
+struct SortOnVector : public testing::TestWithParam<SortDataSet> {};
 
 TEST_P(SortOnVector, GivenAVectorWhenSortIsCalledThenVectorIsSorted) {
     //GIVEN
-    auto v = GetParam();
+    auto [v, comp, expected] = GetParam();
 
     //WHEN
-    std::sort(v.begin(), v.end());
+    std::sort(v.begin(), v.end(), comp);
 
     //THEN
     ASSERT_EQ(v, expected);
 }
 
-TEST_P(SortOnVector, GivenAVectorWhenSortIsCalledWithGreaterThenComparatorThenVectorIsSortedDescending) {
-    //GIVEN
-    auto v = GetParam();
-    setDataForGreaterComp();
+Data expectedAscending = {1, 2, 3};
+Data expectedDescending = {3, 2, 1};
 
-    //WHEN
-    std::sort(v.begin(), v.end(), std::greater<int>{});
-
-    //THEN
-    ASSERT_EQ(v, expected);
-}
-
-INSTANTIATE_TEST_SUITE_P(ThreeElementsVector,
+INSTANTIATE_TEST_SUITE_P(ThreeElementsVectorWithLess,
                          SortOnVector,
-                         testing::Values(std::vector<int>{1, 2, 3},
-                                         std::vector<int>{1, 3, 2},
-                                         std::vector<int>{2, 1, 3},
-                                         std::vector<int>{2, 3, 1},
-                                         std::vector<int>{3, 1, 2},
-                                         std::vector<int>{3, 2, 1}));
+                         testing::Values(std::make_tuple(Data{1, 2, 3}, std::less<int>{}, expectedAscending),
+                                         std::make_tuple(Data{1, 3, 2}, std::less<int>{}, expectedAscending),
+                                         std::make_tuple(Data{2, 1, 3}, std::less<int>{}, expectedAscending),
+                                         std::make_tuple(Data{2, 3, 1}, std::less<int>{}, expectedAscending),
+                                         std::make_tuple(Data{3, 1, 2}, std::less<int>{}, expectedAscending),
+                                         std::make_tuple(Data{3, 2, 1}, std::less<int>{}, expectedAscending)));
 
-
-
-// TEST(SortTest, TestOnVector321){
-//     std::vector v = {3, 2, 1};
-//     std::sort(v.begin(), v.end());
-//     std::vector expected = {1, 2, 3};
-
-//     ASSERT_EQ(v, expected);
-// }
-
-// TEST(SortTest, TestOnVector123){
-//     std::vector v = {1, 2, 3};
-//     std::sort(v.begin(), v.end());
-//     std::vector expected = {1, 2, 3};
-
-//     ASSERT_EQ(v, expected);
-// }
+INSTANTIATE_TEST_SUITE_P(ThreeElementsVectorWithGreater,
+                         SortOnVector,
+                         testing::Values(std::make_tuple(Data{1, 2, 3}, std::greater<int>{}, expectedDescending),
+                                         std::make_tuple(Data{1, 3, 2}, std::greater<int>{}, expectedDescending),
+                                         std::make_tuple(Data{2, 1, 3}, std::greater<int>{}, expectedDescending),
+                                         std::make_tuple(Data{2, 3, 1}, std::greater<int>{}, expectedDescending),
+                                         std::make_tuple(Data{3, 1, 2}, std::greater<int>{}, expectedDescending),
+                                         std::make_tuple(Data{3, 2, 1}, std::greater<int>{}, expectedDescending)));
